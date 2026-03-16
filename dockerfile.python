@@ -1,0 +1,4 @@
+FROM python:3.11-slim
+ENV PYTHONUNBUFFERED=1
+COPY monitor.py /usr/local/bin/monitor.py
+CMD ["python", "/usr/local/bin/monitor.py"]

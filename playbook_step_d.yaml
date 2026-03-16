@@ -1,0 +1,38 @@
+- name: Automatizare Provisioning - Cerinta D
+  # Se executa pe masina locala, fara a necesita conexiune SSH externa
+  hosts: localhost
+  connection: local
+  # Se activeaza escaladarea privilegiilor (necesara pentru crearea de utilizatori si grupuri)
+  become: yes
+
+  # Definirea variabilelor la nivel de playbook pentru flexibilitate
+  vars:
+    devops_user: "ansible_admin"
+    # Parola in clar, care va fi transformata in hash in interiorul task-ului
+    devops_pass: "ParolaDevOps2026!"
+
+  tasks:
+    - name: 1. Asigurarea prezenței grupului Docker în sistem
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: 2. Crearea contului de utilizator cu privilegii depline (sudo și docker)
+      ansible.builtin.user:
+        name: "{{ devops_user }}"
+        # Functia password_hash genereaza o semnatura SHA-512 compatibila cu /etc/shadow
+        password: "{{ devops_pass | password_hash('sha512') }}"
+        groups: sudo,docker
+        append: yes
+        shell: /bin/bash
+        state: present
+
+    - name: 3. Generarea structurii de directoare pentru viitoarele deployment-uri
+      ansible.builtin.file:
+        path: "/home/{{ devops_user }}/docker-deployment"
+        state: directory
+        # Setarea permisiunilor de proprietate catre noul utilizator creat
+        owner: "{{ devops_user }}"
+        group: "{{ devops_user }}"
+        # Permisiuni de tip 0755: rwx pentru proprietar, rx pentru grup si restul
+        mode: '0755'

@@ -1,0 +1,14 @@
+services:
+  monitor-bash:
+    build:
+      context: .
+      dockerfile: dockerfile.bash
+    container_name: monitor-bash-service
+    restart: unless-stopped
+
+  monitor-python:
+    build:
+      context: .
+      dockerfile: dockerfile.python
+    container_name: monitor-python-service
+    restart: unless-stopped

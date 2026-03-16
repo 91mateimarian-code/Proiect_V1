@@ -1,0 +1,42 @@
+---
+- name: Deployment Infrastructura Docker Compose - Cerinta E
+  hosts: localhost
+  connection: local
+  gather_facts: false 
+
+  vars:
+    deploy_dir: "/home/ansible_admin/docker-deployment"
+
+  tasks:
+    - name: 0. Instalarea pachetului ACL (rezolva problema permisiunilor Ansible)
+      ansible.builtin.apt:
+        name: acl
+        state: present
+        update_cache: no
+      # Acest task ruleaza ca root pentru a putea instala pachete in OS
+      become: yes
+
+    - name: 1. Transferul artefactelor sursa si setarea proprietatii
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "{{ deploy_dir }}/"
+        # Setam proprietatea corecta in timp ce copiem ca root
+        owner: "ansible_admin"
+        group: "ansible_admin"
+        mode: '0755'
+      become: yes
+      loop:
+        - docker-compose.yaml
+        - dockerfile.bash
+        - dockerfile.python
+        - monitor.sh
+        - monitor.py
+
+    - name: 2. Pornirea arhitecturii prin utilizatorul creat la Pasul D
+      community.docker.docker_compose_v2:
+        project_src: "{{ deploy_dir }}"
+        state: present
+        build: always
+      # Aici Ansible va reusi sa treaca la noul utilizator datorita pachetului ACL
+      become: yes
+      become_user: "ansible_admin"
